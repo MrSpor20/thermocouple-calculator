@@ -27,7 +27,7 @@
       margin-top: 10px;
       font-weight: bold;
     }
-    input, select {
+    input, select, button {
       width: 100%;
       padding: 8px;
       margin-top: 5px;
@@ -40,6 +40,11 @@
       margin-top: 20px;
       font-size: 1.2em;
       font-weight: bold;
+    }
+    .section {
+      margin-top: 40px;
+      border-top: 1px solid #ccc;
+      padding-top: 20px;
     }
   </style>
 </head>
@@ -77,7 +82,7 @@
 
     <div class="row">
       <label for="scale">Шкала температуры:</label>
-      <select id="scale">
+      <select id="scale" onchange="convertScale()">
         <option value="C">Цельсий (°C)</option>
         <option value="F">Фаренгейт (°F)</option>
         <option value="K">Кельвин (K)</option>
@@ -91,9 +96,40 @@
       <p><strong>Диапазон температур:</strong> от -200°C до 1372°C</p>
       <p><strong>Диапазон ТЭДС:</strong> от -5.891 мВ до 54.886 мВ</p>
     </div>
+
+    <div class="section">
+      <h2>Генерация таблицы значений</h2>
+
+      <div class="row">
+        <label for="range-mode">Режим таблицы:</label>
+        <select id="range-mode">
+          <option value="t-to-mv">Температура → ТЭДС</option>
+          <option value="mv-to-t">ТЭДС → Температура</option>
+        </select>
+      </div>
+      <div class="row">
+        <label for="range-from">От:</label>
+        <input type="number" id="range-from" value="0" step="0.1">
+      </div>
+      <div class="row">
+        <label for="range-to">До:</label>
+        <input type="number" id="range-to" value="100" step="0.1">
+      </div>
+      <div class="row">
+        <label for="range-step">Шаг:</label>
+        <input type="number" id="range-step" value="10" step="0.1">
+      </div>
+      <div class="row" id="range-cj-row">
+        <label for="range-cj">Температура свободного конца (°C):</label>
+        <input type="number" id="range-cj" value="25" step="0.1">
+      </div>
+      <button onclick="generateCSV()">Скачать CSV</button>
+    </div>
   </div>
 
   <script>
+    let currentScale = 'C';
+
     function switchMode() {
       const mode = document.getElementById('mode').value;
       document.getElementById('temp-to-mv-fields').style.display = (mode === 't-to-mv') ? 'block' : 'none';
@@ -107,10 +143,29 @@
       return value;
     }
 
-    function toSelectedScale(value, scale) {
+    function fromCelsius(value, scale) {
       if (scale === 'F') return value * 9 / 5 + 32;
       if (scale === 'K') return value + 273.15;
       return value;
+    }
+
+    function convertScale() {
+      const newScale = document.getElementById('scale').value;
+      const inputs = ['t1', 't2', 'cold-junction', 'range-cj'];
+
+      inputs.forEach(id => {
+        const input = document.getElementById(id);
+        if (input && input.value !== '') {
+          const valueInCelsius = toCelsius(parseFloat(input.value), currentScale);
+          input.value = fromCelsius(valueInCelsius, newScale).toFixed(2);
+        }
+      });
+
+      currentScale = newScale;
+    }
+
+    function toSelectedScale(value, scale) {
+      return fromCelsius(value, scale);
     }
 
     function typeK_TtoMV(t) {
@@ -177,6 +232,44 @@
       }
 
       document.getElementById('output').innerText = result;
+    }
+
+    function generateCSV() {
+      const mode = document.getElementById('range-mode').value;
+      const from = parseFloat(document.getElementById('range-from').value);
+      const to = parseFloat(document.getElementById('range-to').value);
+      const step = parseFloat(document.getElementById('range-step').value);
+      const cjTemp = parseFloat(document.getElementById('range-cj').value);
+      const rows = [];
+
+      const BOM = '\uFEFF'; // Добавляем BOM
+
+      if (mode === 't-to-mv') {
+        rows.push("Температура (°C),ТЭДС (мВ)");
+        for (let t = from; t <= to; t += step) {
+          const mv1 = typeK_TtoMV(t);
+          const mv2 = typeK_TtoMV(cjTemp);
+          const emf = mv1 - mv2;
+          rows.push(`${t.toFixed(2)},${emf.toFixed(5)}`);
+        }
+      } else {
+        rows.push("ТЭДС (мВ),Температура (°C)");
+        for (let mv = from; mv <= to; mv += step) {
+          const mv_cj = typeK_TtoMV(cjTemp);
+          const total_mv = mv + mv_cj;
+          const t = typeK_MVtoT(total_mv);
+          rows.push(`${mv.toFixed(4)},${t.toFixed(2)}`);
+        }
+      }
+
+      const csvContent = BOM + rows.join("\n");
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const link = document.createElement("a");
+      link.setAttribute("href", URL.createObjectURL(blob));
+      link.setAttribute("download", "thermocouple_data.csv");
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     }
   </script>
 </body>
