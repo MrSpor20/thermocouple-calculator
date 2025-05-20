@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Калькулятор термопары типа K</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background-color: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    label {
+      display: block;
+      margin-top: 10px;
+      font-weight: bold;
+    }
+    input, select {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+      box-sizing: border-box;
+    }
+    .row {
+      margin-bottom: 15px;
+    }
+    .result {
+      margin-top: 20px;
+      font-size: 1.2em;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Калькулятор термопары (тип K)</h1>
+
+    <label for="mode">Режим:</label>
+    <select id="mode" onchange="switchMode()">
+      <option value="t-to-mv">Температура → ТЭДС</option>
+      <option value="mv-to-t">ТЭДС → Температура</option>
+    </select>
+
+    <div id="temp-to-mv-fields">
+      <div class="row">
+        <label for="t1">Температура измерительного конца:</label>
+        <input type="number" id="t1" step="0.1" value="100" />
+      </div>
+      <div class="row">
+        <label for="t2">Температура свободного конца:</label>
+        <input type="number" id="t2" step="0.1" value="25" />
+      </div>
+    </div>
+
+    <div id="mv-to-temp-fields" style="display: none;">
+      <div class="row">
+        <label for="mv">ТЭДС (мВ):</label>
+        <input type="number" id="mv" step="0.001" value="2.5" />
+      </div>
+      <div class="row">
+        <label for="cold-junction">Температура свободного конца:</label>
+        <input type="number" id="cold-junction" step="0.1" value="25" />
+      </div>
+    </div>
+
+    <div class="row">
+      <label for="scale">Шкала температуры:</label>
+      <select id="scale">
+        <option value="C">Цельсий (°C)</option>
+        <option value="F">Фаренгейт (°F)</option>
+        <option value="K">Кельвин (K)</option>
+      </select>
+    </div>
+
+    <button onclick="calculate()">Рассчитать</button>
+
+    <div class="result" id="output"></div>
+    <div class="row">
+      <p><strong>Диапазон температур:</strong> от -200°C до 1372°C</p>
+      <p><strong>Диапазон ТЭДС:</strong> от -5.891 мВ до 54.886 мВ</p>
+    </div>
+  </div>
+
+  <script>
+    function switchMode() {
+      const mode = document.getElementById('mode').value;
+      document.getElementById('temp-to-mv-fields').style.display = (mode === 't-to-mv') ? 'block' : 'none';
+      document.getElementById('mv-to-temp-fields').style.display = (mode === 'mv-to-t') ? 'block' : 'none';
+      document.getElementById('output').innerText = '';
+    }
+
+    function toCelsius(value, scale) {
+      if (scale === 'F') return (value - 32) * 5 / 9;
+      if (scale === 'K') return value - 273.15;
+      return value;
+    }
+
+    function toSelectedScale(value, scale) {
+      if (scale === 'F') return value * 9 / 5 + 32;
+      if (scale === 'K') return value + 273.15;
+      return value;
+    }
+
+    function typeK_TtoMV(t) {
+      const c = [
+        0.000000000000E+00,
+        0.394501280250E-01,
+        0.236223735980E-04,
+        -0.328589067840E-06,
+        -0.499048287770E-08,
+        -0.675090591730E-10,
+        -0.574103274280E-12,
+        -0.310888728940E-14,
+        -0.104516093650E-16,
+        -0.198892668780E-19,
+        -0.163226974860E-22
+      ];
+      let mv = 0;
+      for (let i = 0; i < c.length; i++) {
+        mv += c[i] * Math.pow(t, i);
+      }
+      return mv;
+    }
+
+    function typeK_MVtoT(mv) {
+      const c = [
+        0.0000000E+00,
+        2.508355E+01,
+        7.860106E-02,
+        -2.503131E-01,
+        8.315270E-02,
+        -1.228034E-02,
+        9.804036E-04,
+        -4.413030E-05,
+        1.057734E-06,
+        -1.052755E-08
+      ];
+      let t = 0;
+      for (let i = 0; i < c.length; i++) {
+        t += c[i] * Math.pow(mv, i);
+      }
+      return t;
+    }
+
+    function calculate() {
+      const mode = document.getElementById('mode').value;
+      const scale = document.getElementById('scale').value;
+      let result = '';
+
+      if (mode === 't-to-mv') {
+        const t1 = toCelsius(parseFloat(document.getElementById('t1').value), scale);
+        const t2 = toCelsius(parseFloat(document.getElementById('t2').value), scale);
+        const mv1 = typeK_TtoMV(t1);
+        const mv2 = typeK_TtoMV(t2);
+        const emf = mv1 - mv2;
+        result = `ТЭДС: ${emf.toFixed(4)} мВ`;
+      } else {
+        const mv = parseFloat(document.getElementById('mv').value);
+        const t_cj = toCelsius(parseFloat(document.getElementById('cold-junction').value), scale);
+        const mv_cj = typeK_TtoMV(t_cj);
+        const mv_total = mv + mv_cj;
+        const t_hot = typeK_MVtoT(mv_total);
+        const t_converted = toSelectedScale(t_hot, scale);
+        result = `Температура горячего конца: ${t_converted.toFixed(2)} ${scale}`;
+      }
+
+      document.getElementById('output').innerText = result;
+    }
+  </script>
+</body>
+</html>
