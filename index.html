@@ -3,80 +3,148 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Калькулятор термопары типа K</title>
+  <title data-i18n="Калькулятор термопары (тип K)">Калькулятор термопары (тип K)</title>
   <style>
     body { font-family: Arial, sans-serif; background: #f5f5f5; padding: 20px; }
     .container { max-width: 700px; margin: auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
     h1 { text-align: center; }
     label { font-weight: bold; margin-top: 10px; display: block; }
     input, select, button { width: 100%; margin-top: 5px; padding: 8px; box-sizing: border-box; }
-    .row { margin-bottom: 15px; }
+    .unit-input { position: relative; }
+    .unit-input input { width: 100%; padding-right: 2.5em; }
+    .unit-input span.unit-symbol { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); pointer-events: none; color: #555; }
     .result { font-weight: bold; font-size: 1.2em; margin-top: 15px; }
     hr { margin: 30px 0; }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>Калькулятор термопары (тип K)</h1>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+      <h1 data-i18n="Калькулятор термопары (тип K)">Калькулятор термопары (тип K)</h1>
+      <select id="lang" onchange="switchLang()" style="width:auto;padding:4px 8px;font-weight:bold;">
+        <option value="ru">ru</option>
+        <option value="en">eng</option>
+      </select>
+    </div>
 
-    <label for="scale">Шкала температуры:</label>
+    <label data-i18n="Режим:">Режим:</label>
+    <select id="mode" onchange="switchMode()">
+      <option value="t-to-mv" data-i18n="Температура → ТЭДС">Температура → ТЭДС</option>
+      <option value="mv-to-t" data-i18n="ТЭДС → Температура">ТЭДС → Температура</option>
+    </select>
+
+    <label data-i18n="Шкала температуры:">Шкала температуры:</label>
     <select id="scale" onchange="convertScale()">
       <option value="C">Цельсий</option>
       <option value="K">Кельвин</option>
       <option value="F">Фаренгейт</option>
     </select>
 
-    <label for="mode">Режим:</label>
-    <select id="mode" onchange="switchMode()">
-      <option value="t-to-mv">Температура → ТЭДС</option>
-      <option value="mv-to-t">ТЭДС → Температура</option>
-    </select>
-
     <div id="t-to-mv-fields">
-      <label>Температура измерительного конца:</label>
-      <input type="number" id="t1" value="100">
-
-      <label>Температура свободного конца:</label>
-      <input type="number" id="t2" value="25">
+      <label data-i18n="Температура измерительного конца:">Температура измерительного конца:</label>
+      <div class="unit-input">
+        <input type="number" id="t1" value="100">
+        <span class="unit-symbol" id="unit-t1">°C</span>
+      </div>
+      <label data-i18n="Температура свободного конца:">Температура свободного конца:</label>
+      <div class="unit-input">
+        <input type="number" id="t2" value="25">
+        <span class="unit-symbol" id="unit-t2">°C</span>
+      </div>
     </div>
 
     <div id="mv-to-t-fields" style="display:none">
-      <label>ТЭДС (мВ):</label>
+      <label data-i18n="ТЭДС (мВ):">ТЭДС (мВ):</label>
       <input type="number" id="mv" value="2.5">
-
-      <label>Температура свободного конца:</label>
-      <input type="number" id="cold-junction" value="25">
+      <label data-i18n="Температура свободного конца:">Температура свободного конца:</label>
+      <div class="unit-input">
+        <input type="number" id="cold-junction" value="25">
+        <span class="unit-symbol" id="unit-cj">°C</span>
+      </div>
     </div>
 
-    <button onclick="calculate()">Рассчитать</button>
+    <button onclick="calculate()" data-i18n="Рассчитать">Рассчитать</button>
     <div class="result" id="output"></div>
 
     <hr>
 
-    <h2>Экспорт таблицы</h2>
-    <label>Режим:</label>
+    <h2 data-i18n="Экспорт таблицы">Экспорт таблицы</h2>
+    <label data-i18n="Режим таблицы:">Режим таблицы:</label>
     <select id="table-mode">
       <option value="t-to-mv">Температура → ТЭДС</option>
       <option value="mv-to-t">ТЭДС → Температура</option>
     </select>
 
-    <label>От:</label>
+    <label data-i18n="От:">От:</label>
     <input type="number" id="range-from" value="0">
 
-    <label>До:</label>
+    <label data-i18n="До:">До:</label>
     <input type="number" id="range-to" value="100">
 
-    <label>Шаг:</label>
+    <label data-i18n="Шаг:">Шаг:</label>
     <input type="number" id="range-step" value="10">
 
-    <label>Температура свободного конца:</label>
-    <input type="number" id="range-cj" value="25">
+    <label data-i18n="Температура свободного конца:">Температура свободного конца:</label>
+    <div class="unit-input">
+      <input type="number" id="range-cj" value="25">
+      <span class="unit-symbol" id="unit-range-cj">°C</span>
+    </div>
 
-    <button onclick="generateCSV()">Скачать CSV</button>
+    <button onclick="generateCSV()" data-i18n="Скачать CSV">Скачать CSV</button>
   </div>
 
   <script>
     let currentScale = 'C';
+    let currentLang = 'ru';
+    let currentTranslations = {};
+
+    const dict = {
+      ru: {
+        'Калькулятор термопары (тип K)': 'Калькулятор термопары (тип K)',
+        'Режим:': 'Режим:', 'Температура → ТЭДС': 'Температура → ТЭДС', 'ТЭДС → Температура': 'ТЭДС → Температура',
+        'Шкала температуры:': 'Шкала температуры:', 'Цельсий': 'Цельсий', 'Кельвин': 'Кельвин', 'Фаренгейт': 'Фаренгейт',
+        'Температура измерительного конца:': 'Температура измерительного конца:',
+        'Температура свободного конца:': 'Температура свободного конца:',
+        'ТЭДС (мВ):': 'ТЭДС (мВ):', 'Рассчитать': 'Рассчитать',
+        'Экспорт таблицы': 'Экспорт таблицы', 'Режим таблицы:': 'Режим таблицы:',
+        'От:': 'От:', 'До:': 'До:', 'Шаг:': 'Шаг:', 'Скачать CSV': 'Скачать CSV',
+        'ТЭДС:': 'ТЭДС:', 'Температура горячего конца:': 'Температура горячего конца:',
+        'Ошибка: температура вне диапазона': 'Ошибка: температура вне диапазона',
+        'Ошибка: ЭДС вне диапазона': 'Ошибка: ЭДС вне диапазона'
+      },
+      en: {
+        'Калькулятор термопары (тип K)': 'Thermocouple Calculator (Type K)',
+        'Режим:': 'Mode:', 'Температура → ТЭДС': 'Temperature → EMF', 'ТЭДС → Температура': 'EMF → Temperature',
+        'Шкала температуры:': 'Temperature Scale:', 'Цельсий': 'Celsius', 'Кельвин': 'Kelvin', 'Фаренгейт': 'Fahrenheit',
+        'Температура измерительного конца:': 'Hot Junction Temperature:',
+        'Температура свободного конца:': 'Cold Junction Temperature:',
+        'ТЭДС (мВ):': 'EMF (mV):', 'Рассчитать': 'Calculate',
+        'Экспорт таблицы': 'Export Table', 'Режим таблицы:': 'Table Mode:',
+        'От:': 'From:', 'До:': 'To:', 'Шаг:': 'Step:', 'Скачать CSV': 'Download CSV',
+        'ТЭДС:': 'EMF:', 'Температура горячего конца:': 'Hot Junction Temperature:',
+        'Ошибка: температура вне диапазона': 'Error: temperature out of range',
+        'Ошибка: ЭДС вне диапазона': 'Error: EMF out of range'
+      }
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('lang').value = 'ru';
+      switchLang();
+    });
+
+    function switchLang() {
+      currentLang = document.getElementById('lang').value;
+      currentTranslations = dict[currentLang];
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (currentTranslations[key]) el.textContent = currentTranslations[key];
+      });
+      // Переводим опции селектов по атрибуту data-i18n
+      document.querySelectorAll('option[data-i18n]').forEach(opt => {
+        const key = opt.getAttribute('data-i18n');
+        if (currentTranslations[key]) opt.textContent = currentTranslations[key];
+      });
+    }
 
     function switchMode() {
       const mode = document.getElementById('mode').value;
@@ -90,7 +158,6 @@
       if (scale === 'F') return (val - 32) * 5 / 9;
       return val;
     }
-
     function fromCelsius(val, scale) {
       if (scale === 'K') return val + 273.15;
       if (scale === 'F') return val * 9 / 5 + 32;
@@ -99,100 +166,93 @@
 
     function convertScale() {
       const newScale = document.getElementById('scale').value;
-      const fields = ['t1', 't2', 'cold-junction', 'range-cj'];
-      fields.forEach(id => {
-        const input = document.getElementById(id);
-        if (input.value !== '') {
-          const valueC = toCelsius(parseFloat(input.value), currentScale);
-          input.value = fromCelsius(valueC, newScale).toFixed(2);
+      [
+        {id:'t1',unit:'unit-t1'}, {id:'t2',unit:'unit-t2'},
+        {id:'cold-junction',unit:'unit-cj'},{id:'range-cj',unit:'unit-range-cj'}
+      ].forEach(({id,unit}) => {
+        const inp = document.getElementById(id), sp = document.getElementById(unit);
+        if (inp.value !== '') {
+          const c = toCelsius(parseFloat(inp.value), currentScale);
+          inp.value = fromCelsius(c, newScale).toFixed(2);
         }
+        sp.textContent = newScale === 'K' ? 'K' : newScale === 'F' ? '°F' : '°C';
       });
       currentScale = newScale;
     }
 
-    function typeK_TtoMV(t) {
+    function typeK_TtoMV(t) { /* identical to previous version */
       if (t < -270 || t > 1372) return NaN;
       let mv = 0;
       if (t < 0) {
-        const c = [0, 3.9450128025e-2, 2.3622373598e-5, -3.2858906784e-7, -4.9904828777e-9, -6.7509059173e-11, -5.7410327428e-13, -3.1088872894e-15, -1.0451609365e-17, -1.9889266878e-20, -1.6322697486e-23];
-        for (let i = 0; i < c.length; i++) mv += c[i] * Math.pow(t, i);
+        const c = [0,3.9450128025e-2,2.3622373598e-5,-3.2858906784e-7,-4.9904828777e-9,-6.7509059173e-11,-5.7410327428e-13,-3.1088872894e-15,-1.0451609365e-17,-1.9889266878e-20,-1.6322697486e-23];
+        c.forEach((ci,i)=>mv+=ci*Math.pow(t,i));
       } else {
-        const c = [-1.7600413686e-2, 3.8921204975e-2, 1.8558770032e-5, -9.9457928974e-8, 3.1840945719e-10, -5.6072844889e-13, 5.6075059059e-16, -3.2020720003e-19, 9.7151147152e-23, -1.2104721275e-26];
-        for (let i = 0; i < c.length; i++) mv += c[i] * Math.pow(t, i);
-        mv += 1.185976e-1 * Math.exp(-1.183432e-4 * Math.pow(t - 126.9686, 2));
+        const c = [-1.7600413686e-2,3.8921204975e-2,1.8558770032e-5,-9.9457928974e-8,3.1840945719e-10,-5.6072844889e-13,5.6075059059e-16,-3.2020720003e-19,9.7151147152e-23,-1.2104721275e-26];
+        c.forEach((ci,i)=>mv+=ci*Math.pow(t,i));
+        mv+=1.185976e-1*Math.exp(-1.183432e-4*Math.pow(t-126.9686,2));
       }
       return mv;
     }
-
-    function typeK_MVtoT(mv) {
+    function typeK_MVtoT(mv) { /* identical to previous version */
       if (mv < -5.891 || mv > 54.886) return NaN;
       let t = 0;
       if (mv < 0) {
-        const c = [0, 2.5173462e+1, -1.1662878, -1.0833638, -8.9773540e-1, -3.7342377e-1, -8.6632643e-2, -1.0450598e-2, -5.1920577e-4];
-        for (let i = 0; i < c.length; i++) t += c[i] * Math.pow(mv, i);
+        const c=[0,2.5173462e+1,-1.1662878,-1.0833638,-8.9773540e-1,-3.7342377e-1,-8.6632643e-2,-1.0450598e-2,-5.1920577e-4];
+        c.forEach((ci,i)=>t+=ci*Math.pow(mv,i));
       } else if (mv <= 20.644) {
-        const c = [0, 2.508355e+1, 7.860106e-2, -2.503131e-1, 8.315270e-2, -1.228034e-2, 9.804036e-4, -4.413030e-5, 1.057734e-6, -1.052755e-8];
-        for (let i = 0; i < c.length; i++) t += c[i] * Math.pow(mv, i);
+        const c=[0,2.508355e+1,7.860106e-2,-2.503131e-1,8.315270e-2,-1.228034e-2,9.804036e-4,-4.413030e-5,1.057734e-6,-1.052755e-8];
+        c.forEach((ci,i)=>t+=ci*Math.pow(mv,i));
       } else {
-        const c = [-1.318058e+2, 4.830222e+1, -1.646031, 5.464731e-2, -9.650715e-4, 8.802193e-6, -3.110810e-8];
-        for (let i = 0; i < c.length; i++) t += c[i] * Math.pow(mv, i);
+        const c=[-1.318058e+2,4.830222e+1,-1.646031,5.464731e-2,-9.650715e-4,8.802193e-6,-3.110810e-8];
+        c.forEach((ci,i)=>t+=ci*Math.pow(mv,i));
       }
       return t;
     }
 
     function calculate() {
       const mode = document.getElementById('mode').value;
-      const scale = currentScale;
-      let result = '';
-
+      let outputText = '';
       if (mode === 't-to-mv') {
-        const t1 = toCelsius(parseFloat(document.getElementById('t1').value), scale);
-        const t2 = toCelsius(parseFloat(document.getElementById('t2').value), scale);
+        const t1 = toCelsius(parseFloat(document.getElementById('t1').value), currentScale);
+        const t2 = toCelsius(parseFloat(document.getElementById('t2').value), currentScale);
         const mv = typeK_TtoMV(t1) - typeK_TtoMV(t2);
-        result = isNaN(mv) ? 'Ошибка: температура вне диапазона' : `ТЭДС: ${mv.toFixed(4)} мВ`;
+        if (isNaN(mv)) {
+          outputText = currentTranslations['Ошибка: температура вне диапазона'];
+        } else {
+          outputText = `${currentTranslations['ТЭДС:']} ${mv.toFixed(4)} мВ`;
+        }
       } else {
-        const mv = parseFloat(document.getElementById('mv').value);
-        const cj = toCelsius(parseFloat(document.getElementById('cold-junction').value), scale);
-        const mv_total = mv + typeK_TtoMV(cj);
-        const t = typeK_MVtoT(mv_total);
-        result = isNaN(t) ? 'Ошибка: ЭДС вне диапазона' : `Температура горячего конца: ${fromCelsius(t, scale).toFixed(2)} ${scale}`;
+        const mvVal = parseFloat(document.getElementById('mv').value);
+        const cj = toCelsius(parseFloat(document.getElementById('cold-junction').value), currentScale);
+        const total = mvVal + typeK_TtoMV(cj);
+        const t = typeK_MVtoT(total);
+        if (isNaN(t)) {
+          outputText = currentTranslations['Ошибка: ЭДС вне диапазона'];
+        } else {
+          outputText = `${currentTranslations['Температура горячего конца:']} ${fromCelsius(t, currentScale).toFixed(2)} ${document.getElementById('scale').value}`;
+        }
       }
-
-      document.getElementById('output').innerText = result;
+      document.getElementById('output').innerText = outputText;
     }
 
     function generateCSV() {
-      const mode = document.getElementById('table-mode').value;
-      const from = parseFloat(document.getElementById('range-from').value);
-      const to = parseFloat(document.getElementById('range-to').value);
-      const step = parseFloat(document.getElementById('range-step').value);
-      const cj = toCelsius(parseFloat(document.getElementById('range-cj').value), currentScale);
-      const rows = [];
-      const BOM = '\uFEFF';
-
-      if (mode === 't-to-mv') {
+      // unchanged CSV generation
+      const mode=document.getElementById('table-mode').value;
+      const from=parseFloat(document.getElementById('range-from').value);
+      const to=parseFloat(document.getElementById('range-to').value);
+      const step=parseFloat(document.getElementById('range-step').value);
+      const cj=toCelsius(parseFloat(document.getElementById('range-cj').value),currentScale);
+      const rows=[]; const BOM='\uFEFF';
+      if(mode==='t-to-mv'){
         rows.push("Температура (°C),ТЭДС (мВ)");
-        for (let t = from; t <= to; t += step) {
-          const mv = typeK_TtoMV(t) - typeK_TtoMV(cj);
-          if (!isNaN(mv)) rows.push(`${t.toFixed(2)},${mv.toFixed(5)}`);
-        }
+        for(let t=from;t<=to;t+=step){ const mv=typeK_TtoMV(t)-typeK_TtoMV(cj); if(!isNaN(mv)) rows.push(`${t.toFixed(2)},${mv.toFixed(5)}`); }
       } else {
         rows.push("ТЭДС (мВ),Температура (°C)");
-        for (let mv = from; mv <= to; mv += step) {
-          const total_mv = mv + typeK_TtoMV(cj);
-          const t = typeK_MVtoT(total_mv);
-          if (!isNaN(t)) rows.push(`${mv.toFixed(4)},${t.toFixed(2)}`);
-        }
+        for(let mv=from;mv<=to;mv+=step){ const total=mv+typeK_TtoMV(cj); const t=typeK_MVtoT(total); if(!isNaN(t)) rows.push(`${mv.toFixed(4)},${t.toFixed(2)}`); }
       }
-
-      const csvContent = BOM + rows.join("\n");
-      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
-      link.download = "thermocouple_data.csv";
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      const blob=new Blob([BOM+rows.join("\n")],{type:"text/csv;charset=utf-8;"});
+      const link=document.createElement("a"); link.href=URL.createObjectURL(blob); link.download="thermocouple_data.csv";
+      document.body.appendChild(link); link.click(); document.body.removeChild(link);
     }
   </script>
 </body>
