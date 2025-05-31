@@ -57,7 +57,7 @@
     <div id="boundary-info" class="boundary"></div>
 
     <label data-i18n="Шкала температуры:">Шкала температуры:</label>
-    <select id="scale" onchange="convertScale(); updateBoundaries(); document.getElementById('output').innerText = ''">
+    <select id="scale" onchange="setTemperatureScale(this.value); updateBoundaries(); document.getElementById('output').innerText = ''">
       <option value="C" data-i18n="Цельсий">Цельсий</option>
       <option value="K" data-i18n="Кельвин">Кельвин</option>
       <option value="F" data-i18n="Фаренгейт">Фаренгейт</option>
@@ -113,7 +113,7 @@
     <input type="number" id="range-to" value="100">
     <label data-i18n="Шаг:">Шаг:</label>
     <input type="number" id="range-step" value="10">
-    <label data-i18n="Температура свободного конца:">Температура свободного конца:</label>
+    <label data-i18n="Температура свободного конца (только в °C):">Температура свободного конца (только в °C):</label>
     <div class="unit-input">
       <input type="number" id="range-cj" value="25">
       <span class="unit-symbol" id="unit-range-cj">°C</span>
@@ -127,9 +127,96 @@
     let currentTranslations = {};
 
     const dict = {
-      ru: { 'Калькулятор термопары':'Калькулятор термопары','Режим:':'Режим:','Температура → ТЭДС':'Температура → ТЭДС','ТЭДС → Температура':'ТЭДС → Температура','Тип термопары:':'Тип термопары:','Тип R':'Тип R','Тип S':'Тип S','Тип B':'Тип B','Тип J':'Тип J','Тип T':'Тип T','Тип E':'Тип E','Тип K':'Тип K','Тип N':'Тип N','Тип A':'Тип A','Тип L':'Тип L','Тип M':'Тип M','Тип A1':'Тип A1','Тип A2':'Тип A2','Тип A3':'Тип A3','Шкала температуры:':'Шкала температуры:','Цельсий':'Цельсий','Кельвин':'Кельвин','Фаренгейт':'Фаренгейт','Диапазон температуры:':'Диапазон температуры:','Диапазон ЭДС:':'Диапазон ЭДС:','Нет данных':'Нет данных','Точность:':'Точность:','Рассчитать':'Рассчитать','Экспорт таблицы':'Экспорт таблицы','Режим таблицы:':'Режим таблицы:','От:':'От:','До:':'До:','Шаг:':'Шаг:','Скачать CSV':'Скачать CSV','ТЭДС:':'ТЭДС:','Температура горячего конца:':'Температура горячего конца:','Ошибка: температура вне диапазона':'Ошибка: температура вне диапазона','Ошибка: ЭДС вне диапазона':'Ошибка: ЭДС вне диапазона'},
-      en: { 'Калькулятор термопары':'Thermocouple Calculator','Режим:':'Mode:','Температура → ТЭДС':'Temperature → EMF','ТЭДС → Температура':'EMF → Temperature','Тип термопары:':'Thermocouple Type:','Тип R':'Type R','Тип S':'Type S','Тип B':'Type B','Тип J':'Type J','Тип T':'Type T','Тип E':'Type E','Тип K':'Type K','Тип N':'Type N','Тип A':'Type A','Тип L':'Type L','Тип M':'Type M','Тип A1':'Type A1','Тип A2':'Type A2','Тип A3':'Type A3','Шкала температуры:':'Temperature Scale:','Цельсий':'Celsius','Кельвин':'Kelvin','Фаренгейт':'Fahrenheit','Диапазон температуры:':'Temperature Range:','Диапазон ЭДС:':'EMF Range:','Нет данных':'No data available','Точность:':'Precision:','Рассчитать':'Calculate','Экспорт таблицы':'Export Table','Режим таблицы:':'Table Mode:','От:':'From:','До:':'To:','Шаг:':'Step:','Скачать CSV':'Download CSV','ТЭДС:':'EMF:','Температура горячего конца:':'Hot Junction Temperature:','Ошибка: температура вне диапазона':'Error: temperature out of range','Ошибка: ЭДС вне диапазона':'Error: EMF out of range'}
-    };
+  ru: {
+    'Калькулятор термопары': 'Калькулятор термопары',
+    'Режим:': 'Режим:',
+    'Температура → ТЭДС': 'Температура → ТЭДС',
+    'ТЭДС → Температура': 'ТЭДС → Температура',
+    'Тип термопары:': 'Тип термопары:',
+    'Тип R': 'Тип R',
+    'Тип S': 'Тип S',
+    'Тип B': 'Тип B',
+    'Тип J': 'Тип J',
+    'Тип T': 'Тип T',
+    'Тип E': 'Тип E',
+    'Тип K': 'Тип K',
+    'Тип N': 'Тип N',
+    'Тип A': 'Тип A',
+    'Тип L': 'Тип L',
+    'Тип M': 'Тип M',
+    'Тип A1': 'Тип A1',
+    'Тип A2': 'Тип A2',
+    'Тип A3': 'Тип A3',
+    'Шкала температуры:': 'Шкала температуры:',
+    'Цельсий': 'Цельсий',
+    'Кельвин': 'Кельвин',
+    'Фаренгейт': 'Фаренгейт',
+    'Диапазон температуры:': 'Диапазон температуры:',
+    'Диапазон ЭДС:': 'Диапазон ЭДС:',
+    'Нет данных': 'Нет данных',
+    'Точность:': 'Точность:',
+    'Рассчитать': 'Рассчитать',
+    'Экспорт таблицы': 'Экспорт таблицы',
+    'Режим таблицы:': 'Режим таблицы:',
+    'От:': 'От:',
+    'До:': 'До:',
+    'Шаг:': 'Шаг:',
+    'Скачать CSV': 'Скачать CSV',
+    'ТЭДС:': 'ТЭДС:',
+    'Температура горячего конца:': 'Температура горячего конца:',
+    'Ошибка: температура вне диапазона': 'Ошибка: температура вне диапазона',
+    'Ошибка: ЭДС вне диапазона': 'Ошибка: ЭДС вне диапазона',
+	'Температура измерительного конца:': 'Температура измерительного конца:',
+	'Температура свободного конца:':'Температура свободного конца:',
+	'Температура свободного конца (только в °C):':'Температура свободного конца (только в °C):'
+	
+  },
+  en: {
+    'Калькулятор термопары': 'Thermocouple Calculator',
+    'Режим:': 'Mode:',
+    'Температура → ТЭДС': 'Temperature → EMF',
+    'ТЭДС → Температура': 'EMF → Temperature',
+    'Тип термопары:': 'Thermocouple Type:',
+    'Тип R': 'Type R',
+    'Тип S': 'Type S',
+    'Тип B': 'Type B',
+    'Тип J': 'Type J',
+    'Тип T': 'Type T',
+    'Тип E': 'Type E',
+    'Тип K': 'Type K',
+    'Тип N': 'Type N',
+    'Тип A': 'Type A',
+    'Тип L': 'Type L',
+    'Тип M': 'Type M',
+    'Тип A1': 'Type A1',
+    'Тип A2': 'Type A2',
+    'Тип A3': 'Type A3',
+    'Шкала температуры:': 'Temperature Scale:',
+    'Цельсий': 'Celsius',
+    'Кельвин': 'Kelvin',
+    'Фаренгейт': 'Fahrenheit',
+    'Диапазон температуры:': 'Temperature Range:',
+    'Диапазон ЭДС:': 'EMF Range:',
+    'Нет данных': 'No data available',
+    'Точность:': 'Precision:',
+    'Рассчитать': 'Calculate',
+    'Экспорт таблицы': 'Export Table',
+    'Режим таблицы:': 'Table Mode:',
+    'От:': 'From:',
+    'До:': 'To:',
+    'Шаг:': 'Step:',
+    'Скачать CSV': 'Download CSV',
+    'ТЭДС:': 'EMF:',
+    'Температура горячего конца:': 'Hot Junction Temperature:',
+    'Ошибка: температура вне диапазона': 'Error: temperature out of range',
+    'Ошибка: ЭДС вне диапазона': 'Error: EMF out of range',
+	'Температура измерительного конца:': 'Hot junction temperature:',
+	'Температура свободного конца:': 'Cold junction temperature:',
+	'Температура свободного конца (только в °C):': 'Cold junction temperature (°C only):'
+
+  }
+};
+
 
     document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('lang').value = 'ru'; switchLang(); document.getElementById('precision').value = '3'; updateBoundaries();
@@ -138,6 +225,8 @@
       currentLang = document.getElementById('lang').value; currentTranslations = dict[currentLang]||{};
       document.querySelectorAll('[data-i18n]').forEach(el => { const key=el.getAttribute('data-i18n'); if(currentTranslations[key]) el.textContent=currentTranslations[key]; });
       document.querySelectorAll('option[data-i18n]').forEach(opt=>{ const key=opt.getAttribute('data-i18n'); if(currentTranslations[key]) opt.textContent=currentTranslations[key]; });
+	  // обновить граничные значения на новом языке
+  updateBoundaries();
     }
     function switchMode() {
       const mode=document.getElementById('mode').value;
@@ -460,24 +549,53 @@ function typeS_MVtoT(mv) {
 },
 };
 
+function setTemperatureScale(scale) {
+  currentScale = scale;
 
-    function updateBoundaries(){
-      const type=document.getElementById('thermocouple-type').value;
-      const cfg=thermocouples[type]||{};
-      let tempText,current;
-      if(cfg.range&&cfg.range.Tmin!==undefined){
-        const{smin,smax}=cfg.range;
-      }
-      if(cfg.range&&cfg.range.Tmin!==undefined){
-        const{Tmin,Tmax,mVmin,mVmax}=cfg.range;
-        const dispMin=(currentScale==='K'?Tmin+273.15:currentScale==='F'?fromCelsius(Tmin,'F'):Tmin).toFixed(2);
-        const dispMax=(currentScale==='K'?Tmax+273.15:currentScale==='F'?fromCelsius(Tmax,'F'):Tmax).toFixed(2);
-        const unit=currentScale==='K'?'K':currentScale==='F'?'°F':'°C';
-        tempText=`${currentTranslations['Диапазон температуры:']} ${dispMin}…${dispMax} ${unit}`;
-        emfText=`${currentTranslations['Диапазон ЭДС:']} ${mVmin.toFixed(3)}…${mVmax.toFixed(3)} mV`;
-      } else { tempText=currentTranslations['Нет данных']; emfText=currentTranslations['Нет данных']; }
-      document.getElementById('boundary-info').innerHTML=`<div class='result'>${tempText}</div><div class='result'>${emfText}</div>`;
-    }
+  // Обновляем обозначения единиц измерения только в полях расчёта
+  const unit = scale === 'K' ? 'K' : scale === 'F' ? '°F' : '°C';
+  document.getElementById('unit-t1').textContent = unit;
+  document.getElementById('unit-t2').textContent = unit;
+  document.getElementById('unit-cj').textContent = unit;
+
+  // Поле таблицы всегда остаётся в цельсиях
+  document.getElementById('unit-range-cj').textContent = '°C';
+}
+
+
+
+   function updateBoundaries() {
+  const type = document.getElementById('thermocouple-type').value;
+  const cfg = thermocouples[type] || {};
+  let tempText, emfText;
+
+  if (cfg.range && cfg.range.Tmin !== undefined) {
+    const { Tmin, Tmax, mVmin, mVmax } = cfg.range;
+
+    const dispMin = fromCelsius(Tmin, currentScale).toFixed(2);
+    const dispMax = fromCelsius(Tmax, currentScale).toFixed(2);
+    const unit = currentScale === 'K' ? 'K' : currentScale === 'F' ? '°F' : '°C';
+
+    tempText = `${currentTranslations['Диапазон температуры:']} ${dispMin}…${dispMax} ${unit}`;
+    emfText = `${currentTranslations['Диапазон ЭДС:']} ${mVmin.toFixed(3)}…${mVmax.toFixed(3)} mV`;
+  } else {
+    tempText = currentTranslations['Нет данных'];
+    emfText = currentTranslations['Нет данных'];
+  }
+
+  document.getElementById('boundary-info').innerHTML = `
+    <div class='result'>${tempText}</div>
+    <div class='result'>${emfText}</div>
+  `;
+}
+
+// автоматический вызов при смене шкалы
+document.getElementById('temperature-scale').addEventListener('change', () => {
+  const scale = document.getElementById('temperature-scale').value;
+  setTemperatureScale(scale);
+  updateBoundaries();
+});
+
 
     function calculate(){
       const precision=parseInt(document.getElementById('precision').value,10);
@@ -499,34 +617,57 @@ function typeS_MVtoT(mv) {
       document.getElementById('output').innerText=output;
     }
 
-    function generateCSV(){
-      const mode=document.getElementById('table-mode').value;
-      const f=parseFloat(document.getElementById('range-from').value);
-      const t=parseFloat(document.getElementById('range-to').value);
-      const s=parseFloat(document.getElementById('range-step').value);
-      const cj=toCelsius(parseFloat(document.getElementById('range-cj').value),currentScale);
-      const type=document.getElementById('thermocouple-type').value;
-      const cfg=thermocouples[type]||thermocouples['K'];
-      const rows=[];
-      const BOM='\uFEFF';
-      if(mode==='t-to-mv'){
-        rows.push(`${currentTranslations['Температура измерительного конца:']}(°C),ТЭДС(mV)`);
-        for(let x=f; x<=t; x+=s){
-          const m=cfg.TtoMV(x)-cfg.TtoMV(cj);
-          if(!isNaN(m)) rows.push(`${x.toFixed(2)},${m.toFixed(5)}`);
-        }
-      } else {
-        rows.push(`EMF(mV),${currentTranslations['Температура горячего конца:']}(°C)`);
-        for(let x=f; x<=t; x+=s){
-          const temp=cfg.MVtoT(x+cfg.TtoMV(cj));
-          if(!isNaN(temp)) rows.push(`${x.toFixed(4)},${temp.toFixed(2)}`);
-        }
-      }
-      const blob=new Blob([BOM+rows.join("\n")],{type:"text/csv;charset=utf-8;"});
-      const link=document.createElement("a"); link.href=URL.createObjectURL(blob);
-      link.download="data.csv"; document.body.appendChild(link);
-      link.click(); document.body.removeChild(link);
+    function generateCSV() {
+  const mode = document.getElementById('table-mode').value;
+  const f = parseFloat(document.getElementById('range-from').value);
+  const t = parseFloat(document.getElementById('range-to').value);
+  const s = parseFloat(document.getElementById('range-step').value);
+  const cj = parseFloat(document.getElementById('range-cj').value);
+  const type = document.getElementById('thermocouple-type').value;
+  const cfg = thermocouples[type] || thermocouples['K'];
+  const rows = [];
+  const BOM = '\uFEFF';
+
+  // Подписи столбцов с учётом языка, но фиксированной шкалой (°C)
+  const tempUnit = '(°C)';
+  if (currentLang === 'ru') {
+    if (mode === 't-to-mv') {
+      rows.push(`Температура измерительного конца ${tempUnit},ТЭДС (mV)`);
+    } else {
+      rows.push(`ТЭДС (mV),Температура горячего конца ${tempUnit}`);
     }
+  } else {
+    if (mode === 't-to-mv') {
+      rows.push(`Hot junction temperature ${tempUnit},EMF (mV)`);
+    } else {
+      rows.push(`EMF (mV),Hot junction temperature ${tempUnit}`);
+    }
+  }
+
+  // Генерация данных
+  if (mode === 't-to-mv') {
+    for (let x = f; x <= t; x += s) {
+      const m = cfg.TtoMV(x) - cfg.TtoMV(cj);
+      if (!isNaN(m)) rows.push(`${x.toFixed(2)},${m.toFixed(5)}`);
+    }
+  } else {
+    for (let x = f; x <= t; x += s) {
+      const temp = cfg.MVtoT(x + cfg.TtoMV(cj));
+      if (!isNaN(temp)) rows.push(`${x.toFixed(4)},${temp.toFixed(2)}`);
+    }
+  }
+
+  // Скачивание CSV
+  const blob = new Blob([BOM + rows.join("\n")], { type: "text/csv;charset=utf-8;" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = "data.csv";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
+
   </script>
 </body>
 </html>
