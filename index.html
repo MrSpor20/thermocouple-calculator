@@ -13,7 +13,24 @@
     .unit-input { position: relative; }
     .unit-input input { width: 100%; padding-right: 2.5em; }
     .unit-input span.unit-symbol { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); pointer-events: none; color: #555; }
-    .result { font-weight: bold; font-size: 1.1em; margin-top: 15px; }
+    #output-wrapper {
+	margin-top: 20px;
+	padding: 15px;
+	font-size: clamp(1.5rem, 2.5vw, 2rem); /* делает текст адаптивным */
+	font-weight: 700;                      /* делает жирным */
+	text-align: center;
+	background: #f9f9f9;
+	border: 2px solid #007acc;
+	border-radius: 8px;
+	color: #003366;
+	display: none;
+	word-wrap: break-word;                 /* предотвращает вылезание */
+	overflow-wrap: break-word;}
+	.result {
+	font-size: 1em;
+	font-weight: normal;
+	margin-top: 8px;}
+
     .boundary { margin-top: 10px; font-size: 0.95em; color: #333; }
     hr { margin: 30px 0; }
   </style>
@@ -97,7 +114,13 @@
     </div>
 
     <button onclick="calculate()" data-i18n="Рассчитать">Рассчитать</button>
-    <div class="result" id="output"></div>
+	
+	<hr>
+	
+    <div id="output-wrapper" style="display: none;">
+	<div class="result" id="output"></div>
+	</div>
+
 
     <hr>
 
@@ -577,7 +600,9 @@ function setTemperatureScale(scale) {
     const unit = currentScale === 'K' ? 'K' : currentScale === 'F' ? '°F' : '°C';
 
     tempText = `${currentTranslations['Диапазон температуры:']} ${dispMin}…${dispMax} ${unit}`;
-    emfText = `${currentTranslations['Диапазон ЭДС:']} ${mVmin.toFixed(3)}…${mVmax.toFixed(3)} mV`;
+    const mvUnit = currentLang === 'ru' ? 'мВ' : 'mV';
+	emfText = `${currentTranslations['Диапазон ЭДС:']} ${mVmin.toFixed(3)}…${mVmax.toFixed(3)} ${mvUnit}`;
+
   } else {
     tempText = currentTranslations['Нет данных'];
     emfText = currentTranslations['Нет данных'];
@@ -606,18 +631,23 @@ document.getElementById('temperature-scale').addEventListener('change', () => {
       if(mode==='t-to-mv'){
         const t1=toCelsius(parseFloat(document.getElementById('t1').value.replace(',','.')),currentScale);
         const t2=toCelsius(parseFloat(document.getElementById('t2').value.replace(',','.')),currentScale);
-        const mv=cfg.TtoMV(t1)-cfg.TtoMV(t2);
-        output=isNaN(mv)?currentTranslations['Ошибка: температура вне диапазона']:`${currentTranslations['ТЭДС:']} ${mv.toFixed(precision)} mV`;
+        const mv = cfg.TtoMV(t1) - cfg.TtoMV(t2);
+		const mvUnit = currentLang === 'ru' ? 'мВ' : 'mV';
+		output = isNaN(mv)
+		? currentTranslations['Ошибка: температура вне диапазона']
+		: `${currentTranslations['ТЭДС:']} ${mv.toFixed(precision)} ${mvUnit}`;
+
       } else {
         const mvv=parseFloat(document.getElementById('mv').value.replace(',','.'));
         const cj=toCelsius(parseFloat(document.getElementById('cold-junction').value.replace(',','.')),currentScale);
         const t=cfg.MVtoT(mvv+cfg.TtoMV(cj));
         output=isNaN(t)?currentTranslations['Ошибка: ЭДС вне диапазона']:`${currentTranslations['Температура горячего конца:']} ${fromCelsius(t,currentScale).toFixed(precision)} ${currentScale}`;
       }
-      document.getElementById('output').innerText=output;
+      document.getElementById('output-wrapper').style.display = 'block';
+	  document.getElementById('output').innerText = output;
     }
 
-    function generateCSV() {
+   function generateCSV() {
   const mode = document.getElementById('table-mode').value;
   const f = parseFloat(document.getElementById('range-from').value);
   const t = parseFloat(document.getElementById('range-to').value);
@@ -628,36 +658,53 @@ document.getElementById('temperature-scale').addEventListener('change', () => {
   const rows = [];
   const BOM = '\uFEFF';
 
-  // Подписи столбцов с учётом языка, но фиксированной шкалой (°C)
-  const tempUnit = '(°C)';
-  if (currentLang === 'ru') {
-    if (mode === 't-to-mv') {
-      rows.push(`Температура измерительного конца ${tempUnit},ТЭДС (mV)`);
-    } else {
-      rows.push(`ТЭДС (mV),Температура горячего конца ${tempUnit}`);
-    }
-  } else {
-    if (mode === 't-to-mv') {
-      rows.push(`Hot junction temperature ${tempUnit},EMF (mV)`);
-    } else {
-      rows.push(`EMF (mV),Hot junction temperature ${tempUnit}`);
-    }
-  }
+  // Заголовки первой строки
+  rows.push('Thot(°C),mV,Tcold(°C)');
 
-  // Генерация данных
+  let firstRowAdded = false;
+
   if (mode === 't-to-mv') {
     for (let x = f; x <= t; x += s) {
       const m = cfg.TtoMV(x) - cfg.TtoMV(cj);
-      if (!isNaN(m)) rows.push(`${x.toFixed(2)},${m.toFixed(5)}`);
+      if (!isNaN(m)) {
+        if (!firstRowAdded) {
+          rows.push(`${x.toFixed(2)},${m.toFixed(5)},${cj.toFixed(2)}`);
+          firstRowAdded = true;
+        } else {
+          rows.push(`${x.toFixed(2)},${m.toFixed(5)}`);
+        }
+      }
     }
   } else {
     for (let x = f; x <= t; x += s) {
       const temp = cfg.MVtoT(x + cfg.TtoMV(cj));
-      if (!isNaN(temp)) rows.push(`${x.toFixed(4)},${temp.toFixed(2)}`);
+      if (!isNaN(temp)) {
+        if (!firstRowAdded) {
+          rows.push(`${temp.toFixed(2)},${x.toFixed(5)},${cj.toFixed(2)}`);
+          firstRowAdded = true;
+        } else {
+          rows.push(`${temp.toFixed(2)},${x.toFixed(5)}`);
+        }
+      }
     }
   }
 
-  // Скачивание CSV
+  // Обеспечиваем минимум 2 строки (чтобы вставить значение холодного конца и тип)
+  while (rows.length < 2) rows.push(',,');
+  const row1 = rows[0].split(',');
+  const row2 = rows[1].split(',');
+
+  // Убедимся, что в первой строке минимум 4 столбца, чтобы поместить тип
+  while (row1.length < 4) row1.push('');
+  row1[3] = `Type ${type}`; // Вставляем тип термопары в D1
+  rows[0] = row1.join(',');
+
+  // Убедимся, что в строке 2 есть 3 столбца, вставим температуру холодного конца
+  while (row2.length < 3) row2.push('');
+  row2[2] = cj.toFixed(2);
+  rows[1] = row2.join(',');
+
+  // Генерация CSV-файла
   const blob = new Blob([BOM + rows.join("\n")], { type: "text/csv;charset=utf-8;" });
   const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
@@ -666,6 +713,8 @@ document.getElementById('temperature-scale').addEventListener('change', () => {
   link.click();
   document.body.removeChild(link);
 }
+
+
 
 
   </script>
